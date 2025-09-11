@@ -1,0 +1,5 @@
+server:
+  port: 9005
+spring:
+  application:
+    name: langchain4j-04low-or-hight

@@ -13,6 +13,8 @@
         <module>langchain4j-02multi-model-together</module>
         <module>langchain4j-03boot-integration</module>
         <module>langchain4j-04low-or-hight</module>
+        <module>langchain4j-05model-params</module>
+        <module>langchain4j-06chat-image</module>
     </modules>
 
 
