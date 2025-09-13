@@ -1,55 +1,46 @@
 package paperfly.controller;
 
+import dev.langchain4j.data.message.ImageContent;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.model.output.TokenUsage;
+import dev.langchain4j.model.image.ImageModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import paperfly.service.ChatAssistant;
+
+import java.io.IOException;
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/lc4j")
 @Slf4j
 public class LangChain4JChatImageController {
-    @Autowired
-    @Qualifier("deepseek")
-    private ChatModel deepseekChatModel;
 
     @Autowired
-    @Qualifier("qwen")
-    private ChatModel qwenChatModel;
-
+    private ImageModel imageModel;
     @Autowired
-    private ChatAssistant chatAssistant;
+    private ChatModel chatModel;
+    @Value("classpath:static/img.png")
+    private Resource resource;
 
-    @RequestMapping("/chat")
-    public String chat(@RequestParam(value = "question", defaultValue = "你是谁") String question) {
-        String result = qwenChatModel.chat(question);
-        log.info("result:{}", result);
-        return result;
+    @RequestMapping("/chatImage")
+    public String chatImage() throws IOException {
+        byte[] contentAsByteArray = resource.getContentAsByteArray();
+        String base64Data = Base64.getEncoder().encodeToString(contentAsByteArray);
+
+        UserMessage userMessage = UserMessage.from(
+                TextContent.from("从下面图片中获取9.30的交易量"),
+                ImageContent.from(base64Data, "image/png"));
+
+        ChatResponse chatResponse = chatModel.chat(userMessage);
+
+        String text = chatResponse.aiMessage().text();
+        log.info("text:{}", text);
+        return text;
     }
-
-    @RequestMapping("/lowapi/api02")
-    public String api02(@RequestParam(value = "question", defaultValue = "你是谁") String question){
-        ChatResponse chatResponse = qwenChatModel.chat(UserMessage.from(question));
-        String result = chatResponse.aiMessage().text();
-        log.info("result:{}", result);
-
-        TokenUsage tokenUsage = chatResponse.tokenUsage();
-        log.info("tokenUsage:{}", tokenUsage);
-        return result;
-    }
-
-    @RequestMapping("/hightapi/api03")
-    public String api03(@RequestParam(value = "question", defaultValue = "你是谁") String question){
-        String result = chatAssistant.chat(question);
-        log.info("result:{}", result);
-        return result;
-    }
-
 }

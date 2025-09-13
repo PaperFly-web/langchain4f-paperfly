@@ -1,5 +1,5 @@
 server:
-  port: 9005
+  port: 9006
 spring:
   application:
-    name: langchain4j-04low-or-hight
+    name: langchain4j-06chat-image
