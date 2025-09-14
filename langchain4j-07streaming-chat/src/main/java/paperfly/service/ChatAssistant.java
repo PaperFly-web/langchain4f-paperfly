@@ -1,6 +1,8 @@
 package paperfly.service;
 
 
+import reactor.core.publisher.Flux;
+
 public interface ChatAssistant {
-    String chat(String question);
+    Flux<String> chat(String question);
 }
