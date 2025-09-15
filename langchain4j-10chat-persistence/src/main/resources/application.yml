@@ -1,0 +1,28 @@
+server:
+  port: 9010
+  servlet:
+    #    设置响应的字符编码
+    encoding:
+      charset: utf-8
+      force: true
+      enabled: true
+spring:
+  application:
+    name: langchain4j-10chat-persistence
+  data:
+    redis:
+      # 连接地址
+      host: "localhost"
+      # 端口
+      port: 6379
+      # 数据库
+      database: 0
+      # 用户名，如果有
+      username:
+      # 密码，如果有
+      password: 123456
+      # 连接超时
+      connect-timeout: 5s
+      # 读超时
+      timeout: 5s
+
