@@ -27,7 +27,7 @@ public class LangChain4JChatToolsChatController {
 
     @RequestMapping(value = "/function/chat")
     public Object chat(String prompt) throws IOException {
-        String message = "请帮我开一张发票，公司名称是“金桥科技有限公司”，税号是“1234567890ABCDEF”，开票金额是15800.50元。";
+        String message = "-";
         return functionAssistant.chat(message);
 
     }
