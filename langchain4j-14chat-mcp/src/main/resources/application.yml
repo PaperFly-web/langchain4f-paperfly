@@ -1,0 +1,23 @@
+server:
+  port: 9014
+  servlet:
+    #    设置响应的字符编码
+    encoding:
+      charset: utf-8
+      force: true
+      enabled: true
+spring:
+  application:
+    name: langchain4j-14chat-mcp
+
+
+langchain4j:
+  community:
+    dashscope:
+      chat-model:
+        api-key: ${aliAi-key}
+        model-name: qwen-plus
+      streaming-chat-model:
+        api-key: ${aliAi-key}
+        model-name: qwen-plus
+
