@@ -46,7 +46,7 @@ public class LangChain4JChatEmbeddingChatController {
     public void createCollection() throws IOException {
         Collections.VectorParams vectorParams = Collections.VectorParams.newBuilder()
                 .setDistance(Collections.Distance.Cosine)
-                .setSize(1024)
+                .setSize(384)
                 .build();
         qdrantClient.createCollectionAsync("test-qdrant", vectorParams);
     }

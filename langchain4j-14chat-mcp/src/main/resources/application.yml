@@ -10,6 +10,11 @@ spring:
   application:
     name: langchain4j-14chat-mcp
 
+logging:
+  level:
+    okhttp3: DEBUG
+    retrofit2: DEBUG
+    dev.langchain4j: DEBUG
 
 langchain4j:
   community:
@@ -17,7 +22,7 @@ langchain4j:
       chat-model:
         api-key: ${aliAi-key}
         model-name: qwen-plus
-      streaming-chat-model:
-        api-key: ${aliAi-key}
-        model-name: qwen-plus
+#      streaming-chat-model:
+#        api-key: ${aliAi-key}
+#        model-name: qwen-plus
 
