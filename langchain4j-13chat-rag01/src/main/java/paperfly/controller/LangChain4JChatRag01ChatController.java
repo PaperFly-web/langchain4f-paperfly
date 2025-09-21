@@ -1,16 +1,18 @@
 package paperfly.controller;
 
 import dev.langchain4j.data.document.Document;
-import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
+import dev.langchain4j.data.document.parser.TextDocumentParser;
 import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser;
 import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.output.Response;
-import dev.langchain4j.store.embedding.*;
+import dev.langchain4j.store.embedding.EmbeddingMatch;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 import paperfly.service.ChatAssistant;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.PathMatcher;
 import java.util.List;
 
 @RestController
@@ -51,9 +55,24 @@ public class LangChain4JChatRag01ChatController {
     public void createCollection() throws IOException {
         Collections.VectorParams vectorParams = Collections.VectorParams.newBuilder()
                 .setDistance(Collections.Distance.Cosine)
-                .setSize(1024)
+                .setSize(embeddedModel.dimension())
                 .build();
-        qdrantClient.createCollectionAsync("doc-qdrant", vectorParams);
+        qdrantClient.createCollectionAsync("wx-estate", vectorParams);
+    }
+
+    @RequestMapping("/embeddingFile2")
+    public String embeddingFile2() throws IOException {// 创建临时文件
+
+        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.java");
+
+        List<Document> documents = FileSystemDocumentLoader.loadDocumentsRecursively(
+                "D:/project/estate-wx-20241122/estate-wx",
+                pathMatcher,
+                new TextDocumentParser());
+
+        EmbeddingStoreIngestor.builder().embeddingModel(embeddedModel).embeddingStore(embeddingStore).build().ingest(documents);
+
+        return "success";
     }
 
     @RequestMapping(value = "/rag01/add")
@@ -61,7 +80,7 @@ public class LangChain4JChatRag01ChatController {
         Document document = FileSystemDocumentLoader.loadDocument("D:\\01-doc\\公司文件\\2024_08_16_软件产品研发实施准则与规范v1.1\\Java开发手册(黄山版).pdf", new ApacheTikaDocumentParser());
         document.metadata().put("author", "paperfly");
         // 2. 按段落切分
-        DocumentByParagraphSplitter splitter = new DocumentByParagraphSplitter(500,50);
+        DocumentByParagraphSplitter splitter = new DocumentByParagraphSplitter(500, 50);
         List<TextSegment> segments = splitter.split(document);
 
         // 3. 分批调用 embedding（一次最多 10 条）

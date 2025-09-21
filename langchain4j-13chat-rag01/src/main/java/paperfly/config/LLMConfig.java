@@ -9,6 +9,7 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
@@ -39,15 +40,21 @@ public class LLMConfig {
                 .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
                 .build();
     }
-    @Bean
-    public EmbeddingModel embeddingModel() {
-        return OpenAiEmbeddingModel.builder()
-                .apiKey(System.getenv("aliAi-key"))
-                .modelName("text-embedding-v3")
-                .logRequests(true)
-                .logResponses(true)
-                .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
-                .build();
+//    @Bean
+//    public EmbeddingModel embeddingModel() {
+//        return OpenAiEmbeddingModel.builder()
+//                .apiKey(System.getenv("aliAi-key"))
+//                .modelName("text-embedding-v3")
+//                .logRequests(true)
+//                .logResponses(true)
+//                .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
+//                .build();
+//    }
+
+    @Bean("allMiniLmL6V2EmbeddingModel")
+    public EmbeddingModel allMiniLmL6V2EmbeddingModel(){
+        EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+        return embeddingModel;
     }
 
     @Bean
@@ -66,7 +73,7 @@ public class LLMConfig {
                 QdrantEmbeddingStore.builder()
                         .host("127.0.0.1")
                         .port(6334)
-                        .collectionName("doc-qdrant")
+                        .collectionName("wx-estate")
                         .build();
         return embeddingStore;
     }
