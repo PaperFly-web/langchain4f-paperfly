@@ -1,5 +1,6 @@
 package paperfly.controller;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.document.parser.TextDocumentParser;
@@ -16,6 +17,7 @@ import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.grpc.Collections;
+import io.qdrant.client.grpc.Points;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.PathMatcher;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/lc4j")
@@ -61,16 +64,49 @@ public class LangChain4JChatRag01ChatController {
     }
 
     @RequestMapping("/embeddingFile2")
-    public String embeddingFile2() throws IOException {// 创建临时文件
+    public String embeddingFile2() throws IOException, ExecutionException, InterruptedException {// 创建临时文件
 
-        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.java");
+        PathMatcher pathMatcher = FileSystems.getDefault().getPathMatcher("glob:**/*.{java,jsp,html,css,xml,properties}");
+
 
         List<Document> documents = FileSystemDocumentLoader.loadDocumentsRecursively(
                 "D:/project/estate-wx-20241122/estate-wx",
                 pathMatcher,
                 new TextDocumentParser());
 
-        EmbeddingStoreIngestor.builder().embeddingModel(embeddedModel).embeddingStore(embeddingStore).build().ingest(documents);
+        for (Document document : documents) {
+            document.metadata().put("doc_id", document.metadata().getString("absolute_directory_path") + "\\" + document.metadata().getString("file_name"));
+
+            Points.FieldCondition fieldCondition = Points.FieldCondition.newBuilder()
+                    .setKey("file_name")
+                    .setMatch(Points.Match.newBuilder().setText(document.metadata().getString("file_name")))
+                    .build();
+            Points.Condition condition = Points.Condition.newBuilder()
+                    .setField(fieldCondition)
+                    .build();
+
+            Points.Filter filter = Points.Filter.newBuilder()
+                    .addMust(condition)
+                    .build();
+            Points.ScrollPoints request = Points.ScrollPoints.newBuilder()
+                    .setCollectionName("wx-estate")
+                    .setFilter(filter)
+                    .setLimit(5)
+                    .build();
+            ListenableFuture<Points.UpdateResult> updateResultListenableFuture = qdrantClient.deleteAsync("wx-estate", filter);
+            Points.UpdateResult updateResult = updateResultListenableFuture.get();
+            System.out.println("updateResult:" + updateResult.getStatus());
+            /*Points.ScrollResponse scrollResponse = qdrantClient.scrollAsync(request).get();
+            int resultCount = scrollResponse.getResultCount();
+            System.out.println("resultCount:" + resultCount);*/
+
+        }
+        DocumentByParagraphSplitter splitter = new DocumentByParagraphSplitter(500, 50);
+        EmbeddingStoreIngestor.builder()
+                .embeddingModel(embeddedModel)
+                .embeddingStore(embeddingStore)
+                .documentSplitter(splitter)
+                .build().ingest(documents);
 
         return "success";
     }
