@@ -23,6 +23,7 @@
         <module>langchain4j-12chat-embedding</module>
         <module>langchain4j-13chat-rag01</module>
         <module>langchain4j-14chat-mcp</module>
+        <module>langchain4j-15chat-json-schema</module>
     </modules>
 
 
