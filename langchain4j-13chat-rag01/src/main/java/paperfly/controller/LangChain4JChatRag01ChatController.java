@@ -2,6 +2,7 @@ package paperfly.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.document.parser.TextDocumentParser;
 import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser;
@@ -73,7 +74,7 @@ public class LangChain4JChatRag01ChatController {
                 "D:/project/estate-wx-20241122/estate-wx",
                 pathMatcher,
                 new TextDocumentParser());
-
+        //下面这个循环：主要是测试从向量数据库查询数据，然后删除（场景：更新文档了后，删除之前的向量数据）
         for (Document document : documents) {
             document.metadata().put("doc_id", document.metadata().getString("absolute_directory_path") + "\\" + document.metadata().getString("file_name"));
 
@@ -88,19 +89,24 @@ public class LangChain4JChatRag01ChatController {
             Points.Filter filter = Points.Filter.newBuilder()
                     .addMust(condition)
                     .build();
+            //测试查询
             Points.ScrollPoints request = Points.ScrollPoints.newBuilder()
                     .setCollectionName("wx-estate")
                     .setFilter(filter)
                     .setLimit(5)
                     .build();
+            Points.ScrollResponse scrollResponse = qdrantClient.scrollAsync(request).get();
+            int resultCount = scrollResponse.getResultCount();
+            System.out.println("resultCount:" + resultCount);
+
+            //测试删除
             ListenableFuture<Points.UpdateResult> updateResultListenableFuture = qdrantClient.deleteAsync("wx-estate", filter);
             Points.UpdateResult updateResult = updateResultListenableFuture.get();
             System.out.println("updateResult:" + updateResult.getStatus());
-            /*Points.ScrollResponse scrollResponse = qdrantClient.scrollAsync(request).get();
-            int resultCount = scrollResponse.getResultCount();
-            System.out.println("resultCount:" + resultCount);*/
+
 
         }
+//        Document.from("sss", Metadata.from())
         DocumentByParagraphSplitter splitter = new DocumentByParagraphSplitter(500, 50);
         EmbeddingStoreIngestor.builder()
                 .embeddingModel(embeddedModel)
