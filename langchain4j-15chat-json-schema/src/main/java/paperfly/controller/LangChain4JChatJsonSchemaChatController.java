@@ -1,5 +1,6 @@
 package paperfly.controller;
 
+import com.alibaba.dashscope.assistants.Assistant;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.segment.TextSegment;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import paperfly.service.ChatAssistant;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,6 +36,8 @@ import static dev.langchain4j.model.chat.request.ResponseFormatType.JSON;
 public class LangChain4JChatJsonSchemaChatController {
     @Autowired
     private ChatModel chatModel;
+    @Autowired
+    private ChatAssistant assistant;
 
 
     @RequestMapping(value = "/jsonSchema/chat")
@@ -66,5 +70,10 @@ public class LangChain4JChatJsonSchemaChatController {
                 .build();
         ChatResponse chatResponse = chatModel.chat(chatRequest);
         return chatResponse.aiMessage().text();
+    }
+
+    @RequestMapping(value = "/jsonSchema/chat2")
+    public Object chat2(String prompt) throws IOException {
+        return assistant.chat(prompt);
     }
 }

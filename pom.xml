@@ -44,10 +44,10 @@
         <spring-ai-alibaba.version>1.0.0-M6.1</spring-ai-alibaba.version>
 
         <!-- Langchain4j -->
-        <langchain4j.version>1.0.1</langchain4j.version>
+        <langchain4j.version>1.5.0</langchain4j.version>
 
         <!-- Langchain4j-community 引入阿里云百炼平台依赖管理清单 -->
-        <langchain4j-community.version>1.0.1-beta6</langchain4j-community.version>
+        <langchain4j-community.version>1.5.0-beta11</langchain4j-community.version>
 
         <!-- maven plugin -->
         <maven-deploy-plugin.version>3.1.1</maven-deploy-plugin.version>
