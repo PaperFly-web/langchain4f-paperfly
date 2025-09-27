@@ -2,7 +2,6 @@ package paperfly.config;
 
 
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -17,7 +16,6 @@ import io.qdrant.client.QdrantGrpcClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import paperfly.persistence.MongodbChatMemoryStore;
 import paperfly.service.ChatAssistant;
 
 @Configuration
@@ -45,7 +43,7 @@ public class LLMConfig {
 //    }
 
     @Bean("allMiniLmL6V2EmbeddingModel")
-    public EmbeddingModel allMiniLmL6V2EmbeddingModel(){
+    public EmbeddingModel allMiniLmL6V2EmbeddingModel() {
         EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
         return embeddingModel;
     }
@@ -71,18 +69,9 @@ public class LLMConfig {
         return embeddingStore;
     }
 
-    @Bean("mongodbChatMemoryProvider")
-    public ChatMemoryProvider mongodbChatMemoryProvider(MongodbChatMemoryStore store) {
-        ChatMemoryProvider chatMemoryProvider = (memoryId) -> MessageWindowChatMemory.builder()
-                .chatMemoryStore(store)
-                .maxMessages(10)
-                .id(memoryId)
-                .build();
-        return chatMemoryProvider;
-    }
 
     @Bean
-    public ChatAssistant chatAssistant(ChatModel chatModel,EmbeddingStore<TextSegment> embeddingStore,EmbeddingModel embeddingModel) {
+    public ChatAssistant chatAssistant(ChatModel chatModel, EmbeddingStore<TextSegment> embeddingStore, EmbeddingModel embeddingModel) {
         EmbeddingStoreContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(embeddingStore)
                 .embeddingModel(embeddingModel)

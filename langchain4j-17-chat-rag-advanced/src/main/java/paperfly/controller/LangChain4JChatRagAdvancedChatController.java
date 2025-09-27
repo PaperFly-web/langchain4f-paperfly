@@ -58,7 +58,7 @@ public class LangChain4JChatRagAdvancedChatController {
 
         TokenStream tokenStream = chatAssistant.chatTokenStream(9l, question);
         return Flux.create(emitter -> {
-            //最先执行
+            //最先执行,把检索到的内容发送给前端
             tokenStream.onRetrieved(sources -> {
                 for (Content source : sources) {
                     emitter.next(SseResponse.builder().event("source").data(JSONUtil.toJsonStr(source.textSegment().toString())).build().toJsonString());
