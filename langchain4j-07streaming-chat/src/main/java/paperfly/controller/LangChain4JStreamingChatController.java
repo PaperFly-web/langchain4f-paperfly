@@ -8,10 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import paperfly.common.SseResponse;
 import paperfly.service.ChatAssistant;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/lc4j")
@@ -31,16 +34,21 @@ public class LangChain4JStreamingChatController {
 
                 @Override
                 public void onPartialResponse(String partialResponse) {
-                    emitter.next(partialResponse);
+                    emitter.next(SseResponse.message(partialResponse).toJsonString());
                 }
 
                 @Override
                 public void onCompleteResponse(ChatResponse completeResponse) {
+                    Map<String,Object> map = new HashMap<>();
+                    map.put("buildId","nbfuisew87er7wrwbi84g78rew");
+                    emitter.next(SseResponse.businessData(map).toJsonString());
+                    emitter.next(SseResponse.end().toJsonString());
                     emitter.complete();
                 }
 
                 @Override
                 public void onError(Throwable error) {
+                    emitter.next(SseResponse.error(error.getMessage()).toJsonString());
                     emitter.error(error);
                 }
             });
