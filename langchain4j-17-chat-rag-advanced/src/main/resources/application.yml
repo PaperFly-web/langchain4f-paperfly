@@ -9,5 +9,8 @@ server:
 spring:
   application:
     name: langchain4j-17chat-rag-advanced
+  data:
+    mongodb:
+      uri: mongodb://root:123456@localhost:27017/ai-memory?authSource=admin
 
 

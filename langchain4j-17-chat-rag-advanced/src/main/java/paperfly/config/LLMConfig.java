@@ -8,26 +8,33 @@ import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
 import dev.langchain4j.model.input.PromptTemplate;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
+import dev.langchain4j.rag.query.transformer.CompressingQueryTransformer;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
+import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
 import io.qdrant.client.grpc.Collections;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import paperfly.persistence.MongodbChatMemoryStore;
 import paperfly.service.ChatAssistant;
 
 import java.util.List;
@@ -37,9 +44,23 @@ import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metad
 @Configuration
 @Slf4j
 public class LLMConfig {
+    @Autowired
+    @Qualifier("mongodbChatMemoryStore")
+    private ChatMemoryStore mongodbChatMemoryStore;
     @Bean
     public ChatModel chatModel() {
         return OpenAiChatModel.builder()
+                .apiKey(System.getenv("aliAi-key"))
+                .modelName("qwen-plus")
+                .logRequests(true)
+                .logResponses(true)
+                .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
+                .build();
+    }
+
+    @Bean
+    public StreamingChatModel streamingChatModel() {
+        return OpenAiStreamingChatModel.builder()
                 .apiKey(System.getenv("aliAi-key"))
                 .modelName("qwen-plus")
                 .logRequests(true)
@@ -86,7 +107,11 @@ public class LLMConfig {
     }
 
     @Bean
-    public ChatAssistant chatAssistant(ChatModel chatModel, EmbeddingStore<TextSegment> embeddingStore, EmbeddingModel embeddingModel) {
+    public ChatAssistant chatAssistant(ChatModel chatModel, StreamingChatModel streamingChatModel,EmbeddingStore<TextSegment> embeddingStore, EmbeddingModel embeddingModel) {
+        DefaultContentInjector contentInjector = DefaultContentInjector.builder()
+                //自定义增强检索拼接逻辑
+                .promptTemplate(PromptTemplate.from("用户消息：{{userMessage}}\n回复依据：{{contents}}"))
+                .build();
 
         ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(embeddingStore)
@@ -104,19 +129,28 @@ public class LLMConfig {
                     return metadataKey("userId").isEqualTo(userId);
                 })*/
                 .build();
-        DefaultContentInjector contentInjector = DefaultContentInjector.builder()
-                .promptTemplate(PromptTemplate.from("回复依据：{{userMessage}}\n{{contents}}"))
-                .build();
+
+        //压缩历史对话
+        CompressingQueryTransformer queryTransformer = new CompressingQueryTransformer(chatModel);
+
+        //增强检索辅助器
         RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
                 .contentInjector(contentInjector)
                 .contentRetriever(contentRetriever)
+                .queryTransformer(queryTransformer)
                 .build();
-
         return AiServices
                 .builder(ChatAssistant.class)
-                .chatModel(chatModel)
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(10))
-//                .contentRetriever(contentRetriever)
+//                .chatModel(chatModel)
+                .chatMemoryProvider(memoryId -> {
+                    return MessageWindowChatMemory
+                            .builder()
+                            .id(memoryId)
+                            .maxMessages(10)
+                            .chatMemoryStore(mongodbChatMemoryStore)
+                            .build();
+                })
+                .streamingChatModel(streamingChatModel)
                 .retrievalAugmentor(retrievalAugmentor)
                 .build();
     }

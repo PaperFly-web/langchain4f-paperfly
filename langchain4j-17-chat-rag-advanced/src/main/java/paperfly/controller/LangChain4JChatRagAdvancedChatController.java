@@ -1,8 +1,15 @@
 package paperfly.controller;
 
+import cn.hutool.json.JSONUtil;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.query.Query;
+import dev.langchain4j.rag.query.transformer.CompressingQueryTransformer;
+import dev.langchain4j.service.Result;
+import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -11,11 +18,16 @@ import io.qdrant.client.QdrantClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import paperfly.common.SseResponse;
 import paperfly.service.ChatAssistant;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/lc4j")
@@ -23,6 +35,8 @@ import java.util.List;
 public class LangChain4JChatRagAdvancedChatController {
     @Autowired
     private EmbeddingModel embeddedModel;
+    @Autowired
+    private ChatModel chatModel;
     @Autowired
     private ChatAssistant chatAssistant;
     @Autowired
@@ -32,7 +46,39 @@ public class LangChain4JChatRagAdvancedChatController {
 
     @RequestMapping(value = "/rag/advanced/ask")
     public Object ask() throws IOException {
-        return chatAssistant.chat("00000是什么?");
+        Result<String> result = chatAssistant.chatResult("00000是什么?");
+        String answer = result.content();
+        List<Content> sources = result.sources();
+        return Map.of("answer", answer, "sources", sources.toString());
+    }
+
+    @RequestMapping(value = "/rag/advanced/ask2")
+    public Flux<String> ask2(@RequestParam String  question) throws IOException {
+
+
+        TokenStream tokenStream = chatAssistant.chatTokenStream(9l, question);
+        return Flux.create(emitter -> {
+            //最先执行
+            tokenStream.onRetrieved(sources -> {
+                for (Content source : sources) {
+                    emitter.next(SseResponse.builder().event("source").data(JSONUtil.toJsonStr(source.textSegment().toString())).build().toJsonString());
+                }
+                //有深度思考的时候执行
+            }).onPartialThinking(partialThinking -> {
+                emitter.next(SseResponse.thinking(partialThinking.text()).toJsonString());
+                //有部分回答时候执行
+            }).onPartialResponse(partialResponse -> {
+                emitter.next(SseResponse.message(partialResponse).toJsonString());
+                //回答完毕执行
+            }).onCompleteResponse(completeResponse -> {
+                emitter.next(SseResponse.end().toJsonString());
+                emitter.complete();
+            }).onError(error -> {
+                emitter.next(SseResponse.error(error.getMessage()).toJsonString());
+                emitter.error(error);
+            }).start();
+        });
+
     }
 
     @RequestMapping(value = "/rag/advanced/query")

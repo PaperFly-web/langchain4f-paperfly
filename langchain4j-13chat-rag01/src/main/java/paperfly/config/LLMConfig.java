@@ -1,31 +1,24 @@
 package paperfly.config;
 
 
-import dev.langchain4j.data.document.Document;
-import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
-import dev.langchain4j.data.document.parser.TextDocumentParser;
-import dev.langchain4j.data.document.parser.apache.tika.ApacheTikaDocumentParser;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.QdrantGrpcClient;
-import io.qdrant.client.grpc.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import paperfly.persistence.MongodbChatMemoryStore;
 import paperfly.service.ChatAssistant;
-
-import java.util.List;
 
 @Configuration
 @Slf4j
@@ -76,6 +69,16 @@ public class LLMConfig {
                         .collectionName("wx-estate")
                         .build();
         return embeddingStore;
+    }
+
+    @Bean("mongodbChatMemoryProvider")
+    public ChatMemoryProvider mongodbChatMemoryProvider(MongodbChatMemoryStore store) {
+        ChatMemoryProvider chatMemoryProvider = (memoryId) -> MessageWindowChatMemory.builder()
+                .chatMemoryStore(store)
+                .maxMessages(10)
+                .id(memoryId)
+                .build();
+        return chatMemoryProvider;
     }
 
     @Bean
