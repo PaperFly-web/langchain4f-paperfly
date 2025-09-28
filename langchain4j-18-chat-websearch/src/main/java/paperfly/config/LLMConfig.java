@@ -34,6 +34,7 @@ import org.springframework.context.annotation.Configuration;
 import paperfly.service.ChatAssistant;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Configuration
@@ -120,6 +121,7 @@ public class LLMConfig {
         Map<String, Object> optionalParameters = new HashMap<>();
         optionalParameters.put("language", "zh-CN");
         optionalParameters.put("format", "json");
+        optionalParameters.put("enabled_engines", List.of("baidu"));
         SearXNGWebSearchEngine searXNGWebSearchEngine = SearXNGWebSearchEngine.builder()
                 .baseUrl("http://localhost:8888")
                 .logRequests(true)
