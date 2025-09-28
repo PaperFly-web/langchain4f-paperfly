@@ -1,6 +1,7 @@
 package paperfly.config;
 
 
+import dev.langchain4j.community.web.search.searxng.SearXNGWebSearchEngine;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
@@ -20,6 +21,7 @@ import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
+import dev.langchain4j.web.search.WebSearchEngine;
 import dev.langchain4j.web.search.WebSearchTool;
 import dev.langchain4j.web.search.searchapi.SearchApiWebSearchEngine;
 import io.qdrant.client.QdrantClient;
@@ -100,23 +102,38 @@ public class LLMConfig {
         return embeddingStore;
     }
 
+//    @Bean
+//    SearchApiWebSearchEngine searchApiWebSearchEngine() {
+//        Map<String, Object> optionalParameters = new HashMap<>();
+//
+//
+//        return SearchApiWebSearchEngine.builder()
+//                //https://www.searchapi.io/api/v1/search?engine=baidu
+//                .apiKey(System.getenv("web-search-key"))
+//                .engine("baidu")
+////                .optionalParameters(optionalParameters)
+//                .build();
+//    }
+
     @Bean
-    SearchApiWebSearchEngine searchApiWebSearchEngine() {
+    SearXNGWebSearchEngine searchApiWebSearchEngine() {
         Map<String, Object> optionalParameters = new HashMap<>();
+        optionalParameters.put("language", "zh-CN");
+        optionalParameters.put("format", "json");
+        SearXNGWebSearchEngine searXNGWebSearchEngine = SearXNGWebSearchEngine.builder()
+                .baseUrl("http://localhost:8888")
+                .logRequests(true)
+                .logResponses(true)
 
-
-        return SearchApiWebSearchEngine.builder()
-                //https://www.searchapi.io/api/v1/search?engine=baidu
-                .apiKey(System.getenv("web-search-key"))
-                .engine("baidu")
-//                .optionalParameters(optionalParameters)
                 .build();
+
+        return searXNGWebSearchEngine;
     }
 
     @Bean
     public ChatAssistant chatAssistant(ChatModel chatModel, StreamingChatModel streamingChatModel
             , EmbeddingStore<TextSegment> embeddingStore, EmbeddingModel embeddingModel
-    ,SearchApiWebSearchEngine searchApiWebSearchEngine) {
+            , WebSearchEngine webSearchEngine) {
         DefaultContentInjector contentInjector = DefaultContentInjector.builder()
                 //自定义增强检索拼接逻辑
                 .promptTemplate(PromptTemplate.from("用户消息：{{userMessage}}\n回复依据：{{contents}}"))
@@ -149,7 +166,7 @@ public class LLMConfig {
                 .queryTransformer(queryTransformer)
                 .build();
 
-        WebSearchTool webTool = WebSearchTool.from(searchApiWebSearchEngine);
+        WebSearchTool webTool = WebSearchTool.from(webSearchEngine);
         return AiServices
                 .builder(ChatAssistant.class)
 

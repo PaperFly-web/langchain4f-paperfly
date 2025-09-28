@@ -28,16 +28,24 @@ public class LangChain4JChatMcpChatController {
 
     @RequestMapping(value = "/mcp/chat")
     public Flux<String> chat(String prompt) throws IOException {
-        McpTransport transport = new StdioMcpTransport.Builder()
+        /*McpTransport transport = new StdioMcpTransport.Builder()
                 .command(List.of("cmd", "/c", "npx", "-y", "@amap/amap-maps-mcp-server"))
                 .environment(Map.of("AMAP_MAPS_API_KEY", System.getenv("GAODE_MAP_KEY")))
+                .logEvents(true) // only if you want to see the traffic in the log
+                .build();*/
+
+        McpTransport transport2 = new StdioMcpTransport.Builder()
+                .command(List.of("cmd", "/c", "npx", "-y", "@smithery/cli@latest","run"
+                        ,"@leehanchung/bing-search-mcp","--key","653d496e-5ac2-422b-96c8-a563ad35cda0",
+                        "--profile","related-toucan-1vlWpf"))
+//                .environment(Map.of("AMAP_MAPS_API_KEY", System.getenv("GAODE_MAP_KEY")))
                 .logEvents(true) // only if you want to see the traffic in the log
                 .build();
 
 
         McpClient mcpClient = new DefaultMcpClient.Builder()
 //                .key("MyMCPClient")
-                .transport(transport)
+                .transport(transport2)
                 .build();
 
 

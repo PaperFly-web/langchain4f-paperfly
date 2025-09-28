@@ -19,6 +19,10 @@
     <dependencies>
         <dependency>
             <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-community-web-search-engine-searxng</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-web-search-engine-searchapi</artifactId>
         </dependency>
         <dependency>

@@ -49,6 +49,11 @@ public class LangChain4JChatWebSearchChatController {
         return Map.of("answer", answer, "sources", sources.toString());
     }
 
+    @RequestMapping(value = "/rag/advanced/askFlux")
+    public Flux<String> askFlux(@RequestParam String  question) throws IOException {
+        return chatAssistant.chatFluxString(question);
+    }
+
     @RequestMapping(value = "/rag/advanced/ask2")
     public Flux<String> ask2(@RequestParam String  question) throws IOException {
 
