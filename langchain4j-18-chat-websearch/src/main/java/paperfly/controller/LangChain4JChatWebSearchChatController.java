@@ -15,9 +15,11 @@ import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import io.qdrant.client.QdrantClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import paperfly.common.ChatForm;
 import paperfly.common.SseResponse;
 import paperfly.service.ChatAssistant;
 import reactor.core.publisher.Flux;
@@ -55,10 +57,10 @@ public class LangChain4JChatWebSearchChatController {
     }
 
     @RequestMapping(value = "/rag/advanced/ask2")
-    public Flux<String> ask2(@RequestParam String  question) throws IOException {
+    public Flux<String> ask2(@RequestBody ChatForm chatForm) throws IOException {
 
 
-        TokenStream tokenStream = chatAssistant.chatTokenStream(9l, question);
+        TokenStream tokenStream = chatAssistant.chatTokenStream(chatForm.getMemoryId(), chatForm.getMessage());
         return Flux.create(emitter -> {
             //最先执行,把检索到的内容发送给前端
             tokenStream.onRetrieved(sources -> {
