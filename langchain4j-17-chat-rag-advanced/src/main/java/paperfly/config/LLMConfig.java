@@ -68,7 +68,7 @@ public class LLMConfig {
                 .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
                 .build();
     }
-    @Bean
+/*    @Bean
     public EmbeddingModel embeddingModel() {
         return OpenAiEmbeddingModel.builder()
                 .apiKey(System.getenv("aliAi-key"))
@@ -77,13 +77,13 @@ public class LLMConfig {
                 .logResponses(true)
                 .baseUrl("https://dashscope.aliyuncs.com/compatible-mode/v1")
                 .build();
-    }
+    }*/
 
-//    @Bean("allMiniLmL6V2EmbeddingModel")
-//    public EmbeddingModel allMiniLmL6V2EmbeddingModel() {
-//        EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
-//        return embeddingModel;
-//    }
+    @Bean("allMiniLmL6V2EmbeddingModel")
+    public EmbeddingModel allMiniLmL6V2EmbeddingModel() {
+        EmbeddingModel embeddingModel = new AllMiniLmL6V2EmbeddingModel();
+        return embeddingModel;
+    }
 
     @Bean
     public QdrantClient qdrantClient() {
@@ -101,7 +101,7 @@ public class LLMConfig {
                 QdrantEmbeddingStore.builder()
                         .host("127.0.0.1")
                         .port(6334)
-                        .collectionName("doc-qdrant")
+                        .collectionName("estate-fcss")
                         .build();
         return embeddingStore;
     }
@@ -119,9 +119,9 @@ public class LLMConfig {
 //                .maxResults(3)
                 // maxResults 也可以根据查询动态指定
                 .dynamicMaxResults(query -> 3)
-                .minScore(0.75)
+//                .minScore(0.75)
                 // minScore 也可以根据查询动态指定
-                .dynamicMinScore(query -> 0.75)
+//                .dynamicMinScore(query -> 0.75)
 //                .filter(metadataKey("userId").isEqualTo("12345"))
                 // filter 也可以根据查询动态指定
                 /*.dynamicFilter(query -> {

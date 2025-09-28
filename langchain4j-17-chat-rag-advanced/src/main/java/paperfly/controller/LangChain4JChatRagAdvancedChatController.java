@@ -61,7 +61,9 @@ public class LangChain4JChatRagAdvancedChatController {
             //最先执行,把检索到的内容发送给前端
             tokenStream.onRetrieved(sources -> {
                 for (Content source : sources) {
-                    emitter.next(SseResponse.builder().event("source").data(JSONUtil.toJsonStr(source.textSegment().toString())).build().toJsonString());
+                    emitter.next(SseResponse.builder()
+                            .event("source")
+                            .data(JSONUtil.toJsonStr(source.textSegment().toString())).build().toJsonString());
                 }
                 //有深度思考的时候执行
             }).onPartialThinking(partialThinking -> {
