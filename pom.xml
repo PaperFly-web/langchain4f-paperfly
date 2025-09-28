@@ -26,6 +26,7 @@
         <module>langchain4j-15chat-json-schema</module>
         <module>langchain4j-16-chat-guardrail</module>
         <module>langchain4j-17-chat-rag-advanced</module>
+        <module>langchain4j-18-chat-websearch</module>
     </modules>
 
 
